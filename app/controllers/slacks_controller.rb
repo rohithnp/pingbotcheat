@@ -6,10 +6,6 @@ class SlacksController < ApplicationController
 		body = params[:text].split[1]
 		user = params[:user_name]
 
-		if user == 'cheat'
-			break
-		end
-
 		case command
 		when 'add_me'
 			max_rank = Player.maximum('rank') || 0
@@ -165,6 +161,10 @@ class SlacksController < ApplicationController
 		when 'im_back'
 		else
 			message = 'Invalid command'
+		end
+
+		if user == 'cheat'
+			message = ''
 		end
 
 		render :json => {:text=>message}, :status=>201
