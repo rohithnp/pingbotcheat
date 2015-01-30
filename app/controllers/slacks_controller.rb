@@ -80,14 +80,16 @@ class SlacksController < ApplicationController
 					to_user = Player.find(challenge.to_id)
 					last_rank = to_user.rank
 					challenge.update(:status=>-1)
-					to_user.update(:status=>1)
-
+					from_user.update(:status=>1)
 					deactivate(to_user)
 					message = "Challenge from #{from_user.name} declined, you are now off the ranking.  You must challenge at #{last_rank} to get back.  Type im_back when you're ready"
 				else
 					message = "No active challenges to you found"
 				end
 			end
+		when 'i_won'
+		when 'i_lost'
+		when 'im_back'
 		else
 			message = 'Invalid command'
 		end
