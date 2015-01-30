@@ -1,0 +1,15 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  name: MyString
+  rank: 1
+  status: 1
+  last_challenge_issued: 2015-01-30 11:17:44
+  last_rank: 1
+
+two:
+  name: MyString
+  rank: 1
+  status: 1
+  last_challenge_issued: 2015-01-30 11:17:44
+  last_rank: 1
