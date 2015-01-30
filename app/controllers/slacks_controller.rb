@@ -54,7 +54,6 @@ class SlacksController < ApplicationController
 
 		when 'accept'
 			user = Player.find_by(:name => params[:user_name])
-			binding.pry
 			if user.blank?
 				message = "You are not a ping pong player"
 			else

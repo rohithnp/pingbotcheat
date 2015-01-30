@@ -93,9 +93,9 @@ RSpec.describe SlacksController, :type => :controller do
             let!(:challenge){ Challenge.create(:to_id => alicePlayer[:id], :from_id => ryoPlayer[:id], :status => 0) }
 
             it "allows a player to accept a challenge" do
-                expect { subject }.to change{challenge}
+                subject
                 expect(JSON.parse(response.body)["text"]).to include("Challenge from ryo accepted, go play")
-                expect(challenge.status).to eq(1)  
+                expect(challenge.reload.status).to eq(1)  
             end
 
         end
