@@ -88,7 +88,71 @@ class SlacksController < ApplicationController
 				end
 			end
 		when 'i_won'
+			user = Player.find_by(:name => params[:user_name])
+			challenge = Challenge.where("(to_id = ? OR from_id = ?) AND status = 1", user.id, user.id).first
+			if challenge
+				to_user = Player.find(challenge.to_id)
+				from_user = Player.find(challenge.from_id)
+				players = Player.where('status != -1 AND rank > 0').order('rank')
+				player_array = []
+				players.each do |player|
+					player_array << player.id
+				end
+
+				if user == from_user
+					if user.rank > to_user.rank
+						player_array.delete(user.id)	
+						player_array.insert(to_user.rank-1, user.id)
+						rank(player_array)
+					end
+				elsif user == to_user
+					if user.rank > from_user.rank
+						player_array.delete(user.id)
+						player_array.insert(from_user.rank-1, user.id)
+						rank(player_array)
+					end
+				end
+
+				to_user.update(:status => 1)
+				from_user.update(:status => 1)
+				challenge.update(:status => -1)
+
+			else
+				message = 'You are not in an active match right now.  Either accept one, or challenge someone'
+			end
 		when 'i_lost'
+			user = Player.find_by(:name => params[:user_name])
+			challenge = Challenge.where("(to_id = ? OR from_id = ?) AND status = 1", user.id, user.id).first
+			if challenge
+				to_user = Player.find(challenge.to_id)
+				from_user = Player.find(challenge.from_id)
+				players = Player.where('status != -1 AND rank > 0').order('rank')
+				player_array = []
+				players.each do |player|
+					player_array << player.id
+				end
+
+				if user == from_user
+					if user.rank < to_user.rank
+						player_array.delete(to_user.id)	
+						player_array.insert(user.rank-1, to_user.id)
+						rank(player_array)
+					end
+				elsif user == to_user
+					if user.rank < from_user.rank
+						player_array.delete(from_user.id)
+						player_array.insert(user.rank-1, from_user.id)
+						rank(player_array)
+					end
+				end
+
+				to_user.update(:status => 1)
+				from_user.update(:status => 1)
+				challenge.update(:status => -1)
+
+			else
+				message = 'You are not in an active match right now.  Either accept one, or challenge someone'
+			end
 		when 'im_back'
 		else
 			message = 'Invalid command'
@@ -104,10 +168,18 @@ class SlacksController < ApplicationController
 	end
 
 	def rerank
-		players  = Player.where('status != -1 AND rank > 0').order('rank')
+		players = Player.where('status != -1 AND rank > 0').order('rank')
 		i = 1
 		players.each do |player|
 			player.update(:rank=>i)
+			i = i + 1
+		end
+	end
+
+	def rank(player_array)
+		i = 1
+		player_array.each do |player|
+			Player.find(player).update(:rank=>i)
 			i = i + 1
 		end
 	end
