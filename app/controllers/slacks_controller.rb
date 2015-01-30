@@ -116,7 +116,8 @@ class SlacksController < ApplicationController
 				to_user.update(:status => 1)
 				from_user.update(:status => 1)
 				challenge.update(:status => -1)
-
+				user = Player.find_by(:name => params[:user_name])
+				message = 'Good job! Your ranking is now #{user.rank}'
 			else
 				message = 'You are not in an active match right now.  Either accept one, or challenge someone'
 			end
@@ -149,7 +150,9 @@ class SlacksController < ApplicationController
 				to_user.update(:status => 1)
 				from_user.update(:status => 1)
 				challenge.update(:status => -1)
-
+				user = Player.find_by(:name => params[:user_name])
+				message = 'Sorry that you lost, your ranking is now #{user.rank}'
+				
 			else
 				message = 'You are not in an active match right now.  Either accept one, or challenge someone'
 			end

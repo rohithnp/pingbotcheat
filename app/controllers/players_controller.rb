@@ -1,7 +1,5 @@
 class PlayersController < ApplicationController
 
-	respond_to :json
-
 	def create
 		player = Player.new(player_params)
 		if player.save
