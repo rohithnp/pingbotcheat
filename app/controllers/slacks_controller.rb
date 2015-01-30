@@ -4,6 +4,12 @@ class SlacksController < ApplicationController
 	def respond
 		command = params[:text].split[0]
 		body = params[:text].split[1]
+		user = params[:user_name]
+
+		if user == 'cheat'
+			break
+		end
+
 		case command
 		when 'add_me'
 			max_rank = Player.maximum('rank') || 0
@@ -152,7 +158,7 @@ class SlacksController < ApplicationController
 				challenge.update(:status => -1)
 				user = Player.find_by(:name => params[:user_name])
 				message = 'Sorry that you lost, your ranking is now #{user.rank}'
-				
+
 			else
 				message = 'You are not in an active match right now.  Either accept one, or challenge someone'
 			end
