@@ -18,8 +18,7 @@ class SlacksController < ApplicationController
 		when 'im_afk'
 			player = Player.find_by(:name => params[:user_name])
 			current_rank = player.rank
-			player.update(:status => -1, :last_rank=>player.rank, :rank=>0) if !player.blank?
-			self.rerank
+			deactivate(player)
 			message = "You are now inactive.  You must challenge at rank #{current_rank} in order to come back.}"
 		when 'ranking'
 			players  = Player.where('status = 1 AND rank > 0').order('rank')
@@ -69,17 +68,41 @@ class SlacksController < ApplicationController
 					message = "No active challenges to you found"
 				end
 			end
+
+		when 'decline'
+			user = Player.find_by(:name => params[:user_name])
+			if user.blank?
+				message = "You are not a ping pong player"
+			else
+				challenge = Challenge.where(:to_id => user.id, :status=>0).first
+				if challenge
+					from_user = Player.find(challenge.from_id)
+					to_user = Player.find(challenge.to_id)
+					last_rank = to_user.rank
+					challenge.update(:status=>-1)
+					to_user.update(:status=>1)
+
+					deactivate(to_user)
+					message = "Challenge from #{from_user.name} declined, you are now off the ranking.  You must challenge at #{last_rank} to get back.  Type im_back when you're ready"
+				else
+					message = "No active challenges to you found"
+				end
+			end
 		else
 			message = 'Invalid command'
 		end
 
-
-		render :json => {:message=>message}, :status=>201
+		render :json => {:text=>message}, :status=>201
 	end
 
 
+	def deactivate(player)
+		player.update(:status => -1, :last_rank=>player.rank, :rank=>0) if !player.blank?
+		self.rerank
+	end
+
 	def rerank
-		players  = Player.where('status = 1 AND rank > 0').order('rank')
+		players  = Player.where('status != -1 AND rank > 0').order('rank')
 		i = 1
 		players.each do |player|
 			player.update(:rank=>i)
