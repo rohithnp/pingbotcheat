@@ -163,7 +163,7 @@ class SlacksController < ApplicationController
 			message = 'Invalid command'
 		end
 
-		if user == 'cheat'
+		if user == 'slackbot'
 			message = ''
 		end
 
