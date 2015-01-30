@@ -1,6 +1,5 @@
 class SlacksController < ApplicationController
 
-
 	def respond
 		command = params[:text].split[0]
 		body = params[:text].split[1]
@@ -55,7 +54,7 @@ class SlacksController < ApplicationController
 
 		when 'accept'
 			user = Player.find_by(:name => params[:user_name])
-
+			binding.pry
 			if user.blank?
 				message = "You are not a ping pong player"
 			else
