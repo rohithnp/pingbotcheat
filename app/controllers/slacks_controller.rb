@@ -52,7 +52,7 @@ class SlacksController < ApplicationController
 				challenge = Challenge.create(:from_id => from_user.id, :to_id=>to_user.id, :status=> 0)
 				from_user.update(:status=>0)
 				to_user.update(:status=>0)
-				message = "Challenge to #{to_user.name} issued"
+				message = "Challenge to #{to_user.name} issued. @#{to_user.name}, you are challenged by @#{params[:user_name]}"
 			end
 
 		when 'accept'
@@ -65,7 +65,7 @@ class SlacksController < ApplicationController
 				if challenge
 					from_user = Player.find(challenge.from_id)
 					challenge.update(:status=>1)
-					message = "Challenge from #{from_user.name} accepted, go play"
+					message = "Challenge from @#{from_user.name} accepted, go play"
 				else
 					message = "No active challenges to you found"
 				end
@@ -84,81 +84,76 @@ class SlacksController < ApplicationController
 					challenge.update(:status=>-1)
 					from_user.update(:status=>1)
 					deactivate(to_user)
-					message = "Challenge from #{from_user.name} declined, you are now off the ranking.  You must challenge at #{last_rank} to get back.  Type im_back when you're ready"
+					message = "Challenge from @#{from_user.name} declined, you are now off the ranking.  You must challenge at #{last_rank} to get back.  Type im_back when you're ready"
 				else
 					message = "No active challenges to you found"
 				end
 			end
-		when 'i_won'
+
+		when 'i_won', 'i_lost'
 			user = Player.find_by(:name => params[:user_name])
 			challenge = Challenge.where("(to_id = ? OR from_id = ?) AND status = 1", user.id, user.id).first
+			array_of_players = buildArrayOfPlayers
+
 			if challenge
-				to_user = Player.find(challenge.to_id)
-				from_user = Player.find(challenge.from_id)
-				players = Player.where('status != -1 AND rank > 0').order('rank')
-				player_array = []
-				players.each do |player|
-					player_array << player.id
-				end
-
-				if user == from_user
-					if user.rank > to_user.rank
-						player_array.delete(user.id)	
-						player_array.insert(to_user.rank-1, user.id)
-						rank(player_array)
-					end
-				elsif user == to_user
-					if user.rank > from_user.rank
-						player_array.delete(user.id)
-						player_array.insert(from_user.rank-1, user.id)
-						rank(player_array)
+				if command == 'i_won'
+					winning_user = Player.find_by(:name => params[:user_name])
+					if winning_user.id == challenge.from_id
+						losing_user = Player.find(challenge.to_id)
+					else
+						losing_user = Player.find(challenge.from_id)
 					end
 				end
 
-				to_user.update(:status => 1)
-				from_user.update(:status => 1)
+				if command == 'i_lost'
+					losing_user = Player.find_by(:name => params[:user_name])
+					if losing_user.id == challenge.from_id
+						winning_user = Player.find(challenge.to_id)
+					else
+						winning_user = Player.find(challenge.from_id)
+					end
+				end
+
+				from_an_inactive_user = (Player.find(challenge.from_id).rank == 0)
+				winning_user_is_inactive = (winning_user.id == challenge.from_id)
+				losing_user_is_inactive = (losing_user.id == challenge.from_id)
+				winning_user_rank_is_lower = (winning_user.rank > losing_user.rank)
+
+				if from_an_inactive_user
+					if winning_user_is_inactive
+						array_of_players.insert(losing_user.rank-1, winning_user.id)
+					elsif losing_user_is_inactive
+						array_of_players.insert(winning_user.rank, losing_user.id)
+					end
+				else
+					if winning_user_rank_is_lower
+						array_of_players.delete(winning_user.id)
+						array_of_players.insert(losing_user.rank-1, winning_user.id)
+					end
+				end
+				rerank(array_of_players)
+				winning_user.update(:status => 1)
+				losing_user.update(:status => 1)
 				challenge.update(:status => -1)
-				user = Player.find_by(:name => params[:user_name])
-				message = 'Good job! Your ranking is now #{user.rank}'
+
+				message = "Match complete. @#{winning_user.name} won, ranking #{Player.find(winning_user.id).rank}. @#{losing_user.name} lost, ranking #{Player.find(losing_user.id).rank}"
 			else
 				message = 'You are not in an active match right now.  Either accept one, or challenge someone'
 			end
-		when 'i_lost'
-			user = Player.find_by(:name => params[:user_name])
-			challenge = Challenge.where("(to_id = ? OR from_id = ?) AND status = 1", user.id, user.id).first
-			if challenge
-				to_user = Player.find(challenge.to_id)
-				from_user = Player.find(challenge.from_id)
-				players = Player.where('status != -1 AND rank > 0').order('rank')
-				player_array = []
-				players.each do |player|
-					player_array << player.id
-				end
 
-				if user == from_user
-					if user.rank < to_user.rank
-						player_array.delete(to_user.id)	
-						player_array.insert(user.rank-1, to_user.id)
-						rank(player_array)
-					end
-				elsif user == to_user
-					if user.rank < from_user.rank
-						player_array.delete(from_user.id)
-						player_array.insert(user.rank-1, from_user.id)
-						rank(player_array)
-					end
-				end
-
-				to_user.update(:status => 1)
-				from_user.update(:status => 1)
-				challenge.update(:status => -1)
-				user = Player.find_by(:name => params[:user_name])
-				message = 'Sorry that you lost, your ranking is now #{user.rank}'
-
-			else
-				message = 'You are not in an active match right now.  Either accept one, or challenge someone'
-			end
 		when 'im_back'
+			user = Player.find_by(:name => params[:user_name])
+			if user.status != -1
+				message = "What are you talking about? You were never away!"
+			else
+				player_to_challenge = Player.find_by(:rank=>user.last_rank)
+				if player_to_challenge.status != 1
+					message = "You need to challenge #{player_to_challenge.name} to get your rank back, but they are already challenged or playing.  Try again later!"
+				else
+					Challenge.create(:to_id=>player_to_challenge.id, :from_id=>user.id, :status => 0)
+					message = "Challenge sent to @#{player_to_challenge.name} for rank #{player_to_challenge.rank}.  Good luck!"
+				end
+			end
 		else
 			message = 'Invalid command'
 		end
@@ -173,24 +168,34 @@ class SlacksController < ApplicationController
 
 	def deactivate(player)
 		player.update(:status => -1, :last_rank=>player.rank, :rank=>0) if !player.blank?
-		self.rerank
+		self.rerank(nil)
 	end
 
-	def rerank
+	def rerank(player_array)
+		if player_array
+			i = 1
+			player_array.each do |player|
+				Player.find(player).update(:rank=>i)
+				i = i + 1
+			end
+		else
+			players = Player.where('status != -1 AND rank > 0').order('rank')
+			i = 1
+			players.each do |player|
+				player.update(:rank=>i)
+				i = i + 1
+			end
+		end
+	end
+
+	def buildArrayOfPlayers
 		players = Player.where('status != -1 AND rank > 0').order('rank')
-		i = 1
+		player_array = []
 		players.each do |player|
-			player.update(:rank=>i)
-			i = i + 1
+			player_array << player.id
 		end
+		return player_array
 	end
 
-	def rank(player_array)
-		i = 1
-		player_array.each do |player|
-			Player.find(player).update(:rank=>i)
-			i = i + 1
-		end
-	end
 
 end
