@@ -8,8 +8,12 @@ class SlacksController < ApplicationController
 		case command
 		when 'add_me'
 			max_rank = Player.maximum('rank') || 0
-			Player.create(:name=> params[:user_name], :status=> 1, :rank=> max_rank+1)
-			message = "Player #{params[:user_name]} added with rank #{max_rank+1}"
+			if Player.find_by(:name => params[:user_name]).exists?
+				message = "You're already on the ladder foo'!"
+			else
+				Player.create(:name => params[:user_name], :status=> 1, :rank=> max_rank+1)
+				message = "Player #{params[:user_name]} added with rank #{max_rank+1}"
+			end
 		when 'kill_me'
 			player = Player.find_by(:name => params[:user_name])
 			player.destroy if !player.blank?
@@ -152,8 +156,22 @@ class SlacksController < ApplicationController
 					message = "Challenge sent to @#{player_to_challenge.name} for rank #{player_to_challenge.rank}.  Good luck!"
 				end
 			end
+		when 'help'
+			message = "Available commands:\n
+						add_me - adds you to the ladder\n
+						kill_me - removes you from the ladder\n
+						im_afk - removes you from the ladder temporarily\n
+						im_back - brings you back from being off the ladder, and automatically issues a challenge to whoever is in your spot\n
+						ranking - shows you the ladder\n
+						challenge [name] ex: 'challenge ryo'- issues a challenge\n
+						accept - accept a challenge\n
+						decline - decline a challenge, you will be taken off the ladder and you have to say 'im_back'\n
+						i_won - declares victory\n
+						i_lost - declares your epic failure\n
+			"
+		end
 		else
-			message = 'Invalid command'
+			message = "I don't understand you meow. Hint: type 'help'"
 		end
 
 		if user == 'slackbot'
