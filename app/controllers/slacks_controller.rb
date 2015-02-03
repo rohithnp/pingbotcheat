@@ -29,8 +29,13 @@ class SlacksController < ApplicationController
 			players  = Player.where('status = 1 AND rank > 0').order('rank')
 			i = 1
 			message = ''
-			players.each do |player|
-				message = message + "Rank #{player.rank} is #{player.name}! "
+			players.each_with_index do |player, index|
+				extra_thing = ""
+				if(index < 3)
+					extra_thing = ':trophy:'
+				end
+
+				message = message + "#{player.rank}. #{player.name}#{extra_thing}\n"
 				i = i + 1
 			end
 		when 'challenge'
