@@ -8,7 +8,7 @@ class SlacksController < ApplicationController
 		case command
 		when 'add_me'
 			max_rank = Player.maximum('rank') || 0
-			if Player.find_by(:name => params[:user_name]).exists?
+			if Player.exists?(:name => params[:user_name])
 				message = "You're already on the ladder foo'!"
 			else
 				Player.create(:name => params[:user_name], :status=> 1, :rank=> max_rank+1)
