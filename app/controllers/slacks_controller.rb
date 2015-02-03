@@ -20,7 +20,7 @@ class SlacksController < ApplicationController
 			player = Player.find_by(:name => params[:user_name])
 			current_rank = player.rank
 			deactivate(player)
-			message = "You are now inactive.  You must challenge at rank #{current_rank} in order to come back.}"
+			message = "You are now inactive.  You must challenge at rank #{current_rank} in order to come back."
 		when 'ranking'
 			players  = Player.where('status = 1 AND rank > 0').order('rank')
 			i = 1
