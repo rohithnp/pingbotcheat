@@ -157,17 +157,17 @@ class SlacksController < ApplicationController
 				end
 			end
 		when 'help'
-			message = "Available commands:
-						add_me - adds you to the ladder
-						kill_me - removes you from the ladder
-						im_afk - removes you from the ladder temporarily
-						im_back - brings you back from being off the ladder, and automatically issues a challenge to whoever is in your spot
-						ranking - shows you the ladder
-						challenge [name] ex: 'challenge ryo'- issues a challenge
-						accept - accept a challenge
-						decline - decline a challenge, you will be taken off the ladder and you have to say 'im_back'
-						i_won - declares victory
-						i_lost - declares your epic failure
+			message = "Available commands:\n
+						add_me - adds you to the ladder\n
+						kill_me - removes you from the ladder\n
+						im_afk - removes you from the ladder temporarily\n
+						im_back - brings you back from being off the ladder, and automatically issues a challenge to whoever is in your spot\n
+						ranking - shows you the ladder\n
+						challenge [name] ex: 'challenge ryo'- issues a challenge\n
+						accept - accept a challenge\n
+						decline - decline a challenge, you will be taken off the ladder and you have to say 'im_back'\n
+						i_won - declares victory\n
+						i_lost - declares your epic failure\n
 			"
 		else
 			message = "I don't understand you meow. Hint: type 'help'"
