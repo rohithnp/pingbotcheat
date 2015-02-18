@@ -45,6 +45,8 @@ class SlacksController < ApplicationController
 
 			if from_user.blank?
 				message = "You are not a ping pong player"
+			elsif already_challenged(from_user)
+				message = "One challenge per day...cheater!"
 			elsif to_user.blank?
 				message = "#{body} is not a ping pong player"
 			elsif from_user.status == 0
@@ -188,6 +190,10 @@ class SlacksController < ApplicationController
 		end
 
 		render :json => {:text=>message, :mrkdwn => true}, :status=>201
+	end
+
+	def already_challenged?(player)
+		Challange.where("from_id = ? and created_at >= ?", player.id, Time.zone.now.beginning_of_day).exists?
 	end
 
 
